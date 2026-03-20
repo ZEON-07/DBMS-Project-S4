@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Current Stock Information</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header>
+        <a href="index.html">Dashboard</a>
+        <a href="product.html">Products</a>
+        <a href="supplier.html">Suppliers</a>
+        <a href="purchase.html">Purchases</a>
+        <a href="stock.html">Stock</a>
+    </header>
+
+    <div class="container">
+        <nav><h2>Current Stock Information</h2></nav>
+
+        <div class="notice">
+            <strong>Notice:</strong> This data is automatically maintained. SQLite triggers listen for insertions into <code>Purchase_Items</code> and update the stock levels instantly. You cannot edit stock manually here.
+        </div>
+
+        <table>
+            <thead>
+                <tr>
+                    <th>Product ID</th>
+                    <th>Product Name</th>
+                    <th>Category</th>
+                    <th>Quantity Available</th>
+                </tr>
+            </thead>
+            <tbody id="stockTableBody">
+                <tr><td colspan="4">Loading...</td></tr>
+            </tbody>
+        </table>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', loadStock);
+
+        async function loadStock() {
+            const tbody = document.getElementById('stockTableBody');
+            try {
+                const res = await fetch('/api/stock');
+                const stock = await res.json();
+                
+                if (stock.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="4">No stock data available.</td></tr>';
+                    return;
+                }
+
+                tbody.innerHTML = stock.map(item => {
+                    const badgeClass = item.quantity_available > 0 ? 'badge-ok' : 'badge-error';
+                    return `
+                        <tr>
+                            <td>${item.product_id}</td>
+                            <td>${item.product_name}</td>
+                            <td>${item.category}</td>
+                            <td>
+                                <span class="${badgeClass}">${item.quantity_available}</span>
+                            </td>
+                        </tr>
+                    `;
+                }).join('');
+            } catch (err) {
+                tbody.innerHTML = `<tr><td colspan="4">Error loading data</td></tr>`;
+            }
+        }
+    </script>
+</body>
+</html>
